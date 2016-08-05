@@ -1,0 +1,12 @@
+{
+  "name": "quick-search",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "browser-sync start --server . --files 'css/*,img/*,js/*,index.html' --no-open"
+  },
+  "dependencies": {
+    "browser-sync": "2.8.1"
+  }
+}

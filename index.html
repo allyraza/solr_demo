@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Quick Search</title>
+  
+  <!-- styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css">
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.ion.rangeslider/2.0.12/css/ion.rangeSlider.css">
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.ion.rangeslider/2.0.12/css/ion.rangeSlider.skinFlat.css">
+  <link rel="stylesheet" type="text/css" href="css/site.css">
+
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="grid u-cf">
+            <h1 class="brand u-fl">JadoPado</h1>
+
+            <form action="" class="search js-search u-fl">
+                <input class="search__input js-search-input" 
+                    type="text" 
+                    autocomplete="off" 
+                    spellcheck="false" 
+                    autocorrect="off" 
+                    placeholder="Search by name, brand, description...">
+                <div class="search__icon js-search-icon">
+                    <i class="fa fa-search"></i>
+                </div>
+            </form>
+        </div>
+    </header>
+    <!-- /header -->
+
+    <div class="grid">
+        <main class="site-content js-content">
+            <aside class="sidebar">
+                <div id="facets">
+                    <p>[0 TO 100] - 200</p>
+                    <p>[200 TO 300] - 76</p>
+                </div>
+            </aside>
+            <!-- /sidebar -->
+
+            <div class="main">
+                <div id="sort-by" class="sort-by">
+                    <label class="sort-by__label">Sort by:</label>
+                    <select dir="rtl" id="sort-by-select" class="sort-by__select">
+                        <option value="" selected>Most relevant</option>
+                        <option value="_price_asc">Lowest Price</option>
+                        <option value="_price_desc">Highest Price</option>
+                    </select>
+                    <span class="caret sort-by__icon"></span>
+                </div>
+
+                <div class="stats js-stats u-mb"></div>
+                <div class="product-list js-product-list"></div>
+                <div class="pagination js-pagination"></div>
+            </div>
+        </main>
+    </div>
+    <!-- /site-content -->
+
+    <footer class="site-footer">
+        <p class="copyright">
+            Powered by <a href="http://lucene.apache.org/solr/">Solr</a> - 
+            Data from <a href="https://developer.bestbuy.com">Best Buy</a>
+        </p>
+    </footer>
+    <!-- /site-footer -->
+
+    <!-- Templates -->
+    <script type="text/template" id="product-template">
+        {{#docs}}
+        <div class="product">
+            <div class="product__media">
+                <img src="{{ image }}" alt="{{ name }}" class="product__image">
+            </div>
+            <div class="product__content">
+                <h3 class="product__name">{{{ name }}}</h3>
+                <span class="product__brand">{{ brand }}</span>
+                <strong class="product__price">${{ price }}</strong>
+                <!-- <p class="product__description">{{{ summary }}}</p> -->
+            </div>
+        </div>
+        {{/docs}}
+    </script>
+
+    <script type="text/template" id="stats-template">
+        {{ numFound }} Result{{#numFoundPlural}}s{{/numFoundPlural}} 
+        <span class="stats__found-in">Found in {{ qTime }}ms</span>
+    </script>
+
+    <script type="text/template" id="facet-template">
+        <div class="facet">
+            <h5>{{ title }}</h5>
+            <ul>
+            {{#values}}
+                <li>
+                    <a href=""
+                        class="facet-link toggle-refine {{#disjunctive}}facet-disjunctive{{/disjunctive}} {{#isRefined}}facet-refined{{/isRefined}}"
+                        data-facet="{{ facet }}"
+                        data-value="{{ name }}">
+                            {{ name }}
+                        <span class="facet-count">{{ count }}</span>
+                    </a>
+                </li>
+            {{/values}}
+            </ul>
+        </div>
+    </script>
+
+    <script type="text/template" id="slider-template">
+        <div class="facet">
+            <h5>{{ title }}</h5>
+            <input type="text" id="{{ facet }}-slider" data-min="{{ min }}" data-max="{{ max }}" data-from="{{ from }}" data-to="{{ to }}"/>
+        </div>
+    </script>
+
+    <script type="text/template" id="pagination-template">
+        <ul class="pagination__items">
+            <li class="pagination__item{{^prev_page}} disabled{{/prev_page}}">
+                <a href="#" 
+                    class="pagination__link{{#prev_page}} go-to-page{{/prev_page}}" 
+                    {{#prev_page}} data-page="{{ prev_page }}"{{/prev_page}}>
+                    &#60;
+                </a>
+            </li>
+            {{#pages}}
+            <li class="pagination__item{{#current}} active{{/current}} {{#disabled}} disabled{{/disabled}}">
+                <a href="#"
+                    class="pagination__link{{^disabled}} go-to-page{{/disabled}}" 
+                    {{^disabled}} data-page="{{ number }}" {{/disabled}}>
+                    {{ number }}
+                </a>
+            </li>
+            {{/pages}}
+            <li class="pagination__item{{^next_page}} disabled{{/next_page}}">
+                <a href="#" 
+                    class="pagination__link{{#next_page}} go-to-page{{/next_page}}"
+                    {{#next_page}} data-page="{{ next_page }}"{{/next_page}}>
+                    &#62;
+                </a>
+            </li>
+        </ul>
+    </script>
+
+    <script type="text/template" id="no-results-template">
+        <div id="no-results-message">
+            <p>We didn't find any results for the search <em>"{{ query }}"</em>.</p>
+            <ul>
+                {{#filters}}
+                <li class="{{ class }}" 
+                    data-facet="{{ facet }}"
+                    data-value="{{ facet_value }}">
+                    {{ label }}
+                    <span class="value">{{ label_value }}</span>
+                    <a class="remove"><i class="fa fa-remove"></i></a>
+                </li>
+                {{/filters}}
+                <br>
+                <a href="#" class='clear-all'>Clear all</a>
+            </ul>
+        </div>
+    </script>
+
+    <!-- scripts -->
+    <script src="//cdn.jsdelivr.net/jquery/2.1.4/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/hogan.js/3.0.2/hogan.min.common.js"></script>
+    <script src="//cdn.jsdelivr.net/jquery.ion.rangeslider/2.0.12/js/ion.rangeSlider.min.js"></script>
+    <script src="js/site.js"></script>
+
+</body>
+</html>
